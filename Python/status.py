@@ -14,7 +14,7 @@ if __name__ == '__main__':
             puzzles = 0
             complete_days = 0
             for i in range(1, days+1):
-                f.write(f"* [Day {i:02d}](Python/Day{i:02d})")
+                f.write(f"* [Day {i:02d}](Day{i:02d})")
                 path = Path(f"./Python/Day{i:02d}/status")
                 if path.exists():
                     with path.open("rt") as fs:
