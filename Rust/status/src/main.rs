@@ -19,7 +19,7 @@ fn main() {
     let now = OffsetDateTime::now_utc();
     let today = now.date();
 
-    if startdate > today {
+    if startdate >= today {
         let delta: Duration = startdate - today;
         let days = delta.whole_days() + 1;
         text.push_str(&format!("AoC hasn't started yet. It will start in {days} days!\n"))
