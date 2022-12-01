@@ -4,12 +4,7 @@
 		{
 			"type": "shell",
 			"label": "Check status",
-			"command": "cd ${workspaceFolder} && python Python/status.py && cd Rust/status && ./target/release/status"
-		},
-		{
-			"type": "shell",
-			"label": "New day",
-			"command": "cd ${workspaceFolder} && python Python/newday.py"
+			"command": "cd ${workspaceFolder}/Python && python status.py && cd ${workspaceFolder}/Rust/status && ./target/release/status"
 		},
 	]
 }
