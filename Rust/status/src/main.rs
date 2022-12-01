@@ -30,8 +30,8 @@ fn main() {
         let mut puzzles: u16 = 0;
         let mut complete_days: u16 = 0;
         for d in 1..(days+1) {
-            text.push_str(&format!("* [Day {d:02}](Day{d:02})"));
-            let fname = &format!("../Day{d:02}/status");
+            text.push_str(&format!("* [Day {d:02}](day{d:02})"));
+            let fname = &format!("../day{d:02}/status");
             let path_st = Path::new(fname);
             if path_st.exists() {
                 let mut f = File::open(path_st).expect("The file couldn't be read");
