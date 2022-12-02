@@ -17,6 +17,12 @@ class PlayHuman(int, Enum):
     Z = 3  # Scissors
 
 
+class ResultHuman(int, Enum):
+    X = 2  # Lose
+    Y = 0  # Draw
+    Z = 1  # Win
+
+
 def scores() -> dict[str, int]:
     d = {}
     for e, h in itertools.product("ABC", "XYZ"):
@@ -31,6 +37,17 @@ def part1(inp: str) -> int:
     return sum(score_table[m] for m in inp.split('\n'))
 
 
+def part2(inp: str) -> int:
+    tot = 0
+    score_table = scores()
+    for m in inp.split('\n'):
+        e = m[0]
+        h = m[2]
+        playcode = (PlayElf[e] + ResultHuman[h]) % 3
+        play = PlayHuman(playcode if playcode > 0 else 3)
+        tot += score_table[" ".join((e, play.name))]
+    return tot
+
 if __name__ == '__main__':
     with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
@@ -38,3 +55,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
