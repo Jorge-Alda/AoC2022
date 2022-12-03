@@ -27,6 +27,23 @@ fn part1(input: String) -> u32 {
     tot
 }
 
+fn part2(input: String) -> u32 {
+    let mut tot: u32 = 0;
+    let rucksacks: Vec<&str> = input.split('\n').collect();
+    for i in 0..rucksacks.len()/3 {
+        let r1 = rucksacks[3*i];
+        let r2 = rucksacks[3*i+1];
+        let r3 = rucksacks[3*i+2];
+        for item in r1.chars() {
+            if r2.contains(item) & r3.contains(item){
+                tot = tot + priority(item);
+                break;
+            }
+        }
+    }
+    tot
+}
+
 fn main() {
     
     let path_st = Path::new("status");
@@ -40,6 +57,16 @@ fn main() {
 
     let mut file = File::create(path_st).unwrap();
     file.write_all("1\n".as_bytes()).unwrap();
+
+    let input = include_str!("../input");
+    let res = crate::part2(String::from(input.trim()));
+    
+    let path_o2 = Path::new("output2");
+    let mut file = File::create(path_o2).unwrap();
+    file.write_all(format!("{res}").as_bytes()).unwrap();
+
+    let mut file = File::create(path_st).unwrap();
+    file.write_all("2\n".as_bytes()).unwrap();
 }
 
 #[cfg(test)]
@@ -60,5 +87,12 @@ mod tests {
         let input = include_str!("../test");
         let res = crate::part1(String::from(input.trim()));
         assert_eq!(res, 157);
+    }
+
+    #[test]
+    fn test_part2(){
+        let input = include_str!("../test");
+        let res = crate::part2(String::from(input.trim()));
+        assert_eq!(res, 70);
     }
 }
