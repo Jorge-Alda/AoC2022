@@ -10,10 +10,19 @@ def part1(inp: str) -> int:
         start1, end1 = elf1.split('-')
         start2, end2 = elf2.split('-')
         if (int(start1) <= int(start2)) and (int(end1) >= int(end2)):
-            print(f"1>2: {l}")
             overlaps += 1
-        elif ((s1 := int(start1)) >= (s2 := int(start2))) and ((e1 := int(end1)) <= (e2 := int(end2))):
-            print(f"2>1: {l}")
+        elif (int(start1) >= int(start2)) and (int(end1) <= int(end2)):
+            overlaps += 1
+    return overlaps
+
+
+def part2(inp: str) -> int:
+    overlaps = 0
+    for l in inp.split('\n'):
+        elf1, elf2 = l.split(',')
+        start1, end1 = elf1.split('-')
+        start2, end2 = elf2.split('-')
+        if (int(end1) >= int(start2)) and (int(end2) >= int(start1)):
             overlaps += 1
     return overlaps
 
@@ -25,3 +34,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
