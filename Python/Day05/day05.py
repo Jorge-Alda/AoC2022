@@ -28,6 +28,7 @@ def rev(s: str) -> str:
 
 def part1(inp: str) -> str:
     crates, instructions = parse_input(inp)
+    print(crates)
     for ins in instructions:
         ins_s = ins.split()
         quant = int(ins_s[1])
