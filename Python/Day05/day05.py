@@ -38,6 +38,17 @@ def part1(inp: str) -> str:
     return "".join(c[0] for c in crates)
 
 
+def part2(inp: str) -> str:
+    crates, instructions = parse_input(inp)
+    for ins in instructions:
+        ins_s = ins.split()
+        quant = int(ins_s[1])
+        source = int(ins_s[3])-1
+        dest = int(ins_s[5])-1
+        crates[dest] = crates[source][:quant] + crates[dest]
+        crates[source] = crates[source][quant:]
+    return "".join(c[0] for c in crates)
+
 if __name__ == '__main__':
     with open(basepath/"input", "rt") as f:
         inp = f.read()
@@ -45,3 +56,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
