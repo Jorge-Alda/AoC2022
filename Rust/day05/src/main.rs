@@ -51,6 +51,18 @@ fn move_1by1 (crates: &mut Vec<String>, source: usize, dest: usize, quant: usize
     crates[source] = String::from(remain);
 }
 
+
+fn move_all (crates: &mut Vec<String>, source: usize, dest: usize, quant: usize){
+    let s = crates[source].clone();
+    let (moved, remain) = s.split_at(quant);
+
+    let mut received = String::from(moved);
+    received.push_str(crates[dest].as_str());
+    crates[dest] = received;
+    crates[source] = String::from(remain);
+}
+
+
 fn part1 (input: String) -> String {
     let parsed = parse(input);
     let mut crates = parsed.crates.clone();
@@ -62,6 +74,25 @@ fn part1 (input: String) -> String {
         source -= 1;
         dest -= 1;
         move_1by1(&mut crates, source, dest, quant);
+    }
+    let mut res = String::from("");
+    for c in crates {
+        res.push(c.chars().nth(0).unwrap());
+    }
+    res
+}
+
+fn part2 (input: String) -> String {
+    let parsed = parse(input);
+    let mut crates = parsed.crates.clone();
+    for ins in parsed.instructions {
+        let ins_s: Vec<&str> = ins.split_whitespace().collect();
+        let quant: usize = ins_s[1].parse().unwrap();
+        let mut source: usize = ins_s[3].parse().unwrap();
+        let mut dest: usize = ins_s[5].parse().unwrap();
+        source -= 1;
+        dest -= 1;
+        move_all(&mut crates, source, dest, quant);
     }
     let mut res = String::from("");
     for c in crates {
@@ -83,7 +114,17 @@ fn main() {
 
     let mut file = File::create(path_st).unwrap();
     file.write_all("1\n".as_bytes()).unwrap();
+    
+    let input = include_str!("../input");
+    let res = crate::part2(String::from(input));
 
+    let path_o2 = Path::new("output2");
+    let mut file = File::create(path_o2).unwrap();
+    file.write_all(format!("{res}").as_bytes()).unwrap();
+
+    let mut file = File::create(path_st).unwrap();
+    file.write_all("2\n".as_bytes()).unwrap();
+    
 }
 
 #[cfg(test)]
@@ -95,10 +136,10 @@ mod tests {
         assert_eq!(res, String::from("CMZ"));
     }
 
-    //#[test]
-    //fn test_part2(){
-    //    let input = include_str!("../test");
-    //    let res = crate::part2(String::from(input.trim()));
-    //    assert_eq!(res, 4);
-    //}
+    #[test]
+    fn test_part2(){
+        let input = include_str!("../test");
+        let res = crate::part2(String::from(input));
+        assert_eq!(res, String::from("MCD"));
+    }
 }
