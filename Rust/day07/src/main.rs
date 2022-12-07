@@ -68,6 +68,19 @@ fn part1(input: String) -> u128 {
     tot
 }
 
+fn part2(input: String) -> u128{
+    let fs = filesystem(input);
+    let mut min_size: u128 = 70000000;
+    let needed = fs.get(&String::from("")).unwrap().to_owned() - 40000000;
+    for v in fs.values(){
+        let v2 = v.to_owned();
+        if v2 > needed && v2 < min_size {
+            min_size = v2;
+        }
+    }
+    min_size
+}
+
 fn main() {
         
     let path_st = Path::new("status");
@@ -82,6 +95,15 @@ fn main() {
     let mut file = File::create(path_st).unwrap();
     file.write_all("1\n".as_bytes()).unwrap();
 
+    let input = include_str!("../input").trim();
+    let res = crate::part2(String::from(input));
+    
+    let path_o2 = Path::new("output2");
+    let mut file = File::create(path_o2).unwrap();
+    file.write_all(format!("{res}").as_bytes()).unwrap();
+
+    let mut file = File::create(path_st).unwrap();
+    file.write_all("2\n".as_bytes()).unwrap();
 }
 
 #[cfg(test)]
@@ -100,5 +122,12 @@ mod tests {
         let input = include_str!("../test").trim();
         let res = crate::part1(String::from(input));
         assert_eq!(res, 95437);
+    }
+
+    #[test]
+    fn test_part2(){
+        let input = include_str!("../test").trim();
+        let res = crate::part2(String::from(input));
+        assert_eq!(res, 24933642);
     }
 }
