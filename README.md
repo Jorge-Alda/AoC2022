@@ -39,3 +39,17 @@ itertools = "0.10.5"
 ```rust
 use itertools.Itertools;
 ```
+
+### Day 07
+
+Filtering values from a HashMap needs two de-references: `values()` (or `keys()`, `items()`) return references so not to consume the map, and `filter()` also doesn't consume its arguments:
+
+```rust
+use std::collections::HashMap;
+
+let mut map: HashMap<String, u32> = HashMap::new();
+
+//...
+
+let total = map.values().filter(|x| **x > 0).sum();
+```

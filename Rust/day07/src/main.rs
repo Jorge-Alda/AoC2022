@@ -58,27 +58,13 @@ fn filesystem(input: String) -> HashMap<String, u128> {
 
 fn part1(input: String) -> u128 {
     let fs = filesystem(input);
-    let mut tot: u128 = 0;
-    for v in fs.values() {
-        let v2 = v.to_owned();
-        if v2 < 100000{
-            tot += v2;
-        }
-    }
-    tot
+    fs.values().filter(|size| **size < 100000).sum()
 }
 
 fn part2(input: String) -> u128{
     let fs = filesystem(input);
-    let mut min_size: u128 = 70000000;
     let needed = fs.get(&String::from("")).unwrap().to_owned() - 40000000;
-    for v in fs.values(){
-        let v2 = v.to_owned();
-        if v2 > needed && v2 < min_size {
-            min_size = v2;
-        }
-    }
-    min_size
+    *fs.values().filter(|size| **size > needed).min().unwrap()
 }
 
 fn main() {
