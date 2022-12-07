@@ -13,8 +13,10 @@ def child(path: str, directory: str) -> str:
 
 def dir_tree(directory: str) -> list[str]:
     tree = []
+    if directory == '':
+        return ['']
     dirs = directory.split('/')
-    for i in range(len(dirs)+1):
+    for i in range(1, len(dirs)+1):
         tree.append("/".join(dirs[0:i]))
     return tree
 
@@ -44,6 +46,11 @@ def part1(inp: str) -> int:
     return sum(v for v in fs.values() if v <= 100000)
 
 
+def part2(inp: str) -> int:
+    fs = filesystem(inp)
+    needed = fs[''] - 40000000
+    return min(v for v in fs.values() if v > needed)
+
 if __name__ == '__main__':
     with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
@@ -51,3 +58,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
