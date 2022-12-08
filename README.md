@@ -53,3 +53,7 @@ let mut map: HashMap<String, u32> = HashMap::new();
 
 let total = map.values().filter(|x| **x > 0).sum();
 ```
+
+### Day 08
+
+Debugging Rust with the extension [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb).
