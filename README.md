@@ -57,3 +57,34 @@ let total = map.values().filter(|x| **x > 0).sum();
 ### Day 08
 
 Debugging Rust with the extension [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb).
+
+### Day 09
+
+* Implementing `From` to convert to a custom enum/struct
+
+```rust
+use std::convert::From;
+
+struct MyStruct {
+  //...
+}
+
+impl MyStruct {
+  fn From<i32>(x: i32) -> Self {
+    //...
+  }
+}
+```
+
+* Appending the content of a vector into other vector:
+
+```rust
+let mut v1 = vec![1, 2, 3];
+let mut v2 = vec![4, 5, 6];
+
+v1.append(&mut v2);
+assert_eq![v1, vec![1, 2, 3, 4, 5, 6]];
+assert_eq![v2, []];
+```
+
+Note that the copied vector needs to be passed as `&mut`, as it will be emptied by `append`.
