@@ -1,4 +1,12 @@
 from pathlib import Path
+import sys
+
+sys.path.insert(0, "..")
+
+try:
+    from ocr import ocr_scan
+except ImportError:
+    def ocr_scan(inp: str, *, on: str = "#", off: str = ' '): return inp
 
 basepath = Path(__file__).parent
 
@@ -31,7 +39,7 @@ def part2(inp: str) -> str:
         if abs((cycle % 40)-X) <= 1:
             screen += '#'
         else:
-            screen += '.'
+            screen += ' '
         if cycle % 40 == 39:
             screen += '\n'
         if waiting:
@@ -54,4 +62,4 @@ if __name__ == '__main__':
 
     out2 = part2(inp)
     with open(basepath/"output2", "wt") as f:
-        f.write(str(out2))
+        f.write(ocr_scan(out2[:-1]))
