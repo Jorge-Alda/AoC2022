@@ -3,6 +3,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
+mod ocr;
+
+pub use crate::ocr::ocr_scan;
+
 fn solve(input: String) -> (i32, String) {
     let mut screen = String::new();
     let mut commands = input.split('\n')
@@ -49,7 +53,8 @@ fn main() {
     let input = include_str!("../input").trim();
     let res = solve(String::from(input));
     let res_1 = res.0;
-    let res_2 = res.1;
+    let res_2 = res.1.trim().replace(".", " ");
+    let res_2_ocr = ocr_scan(String::from(res_2)).unwrap();
     
     let path_o1 = Path::new("output1");
     let mut file = File::create(path_o1).unwrap();
@@ -60,7 +65,7 @@ fn main() {
     
     let path_o2 = Path::new("output2");
     let mut file = File::create(path_o2).unwrap();
-    file.write_all(format!("{res_2}").as_bytes()).unwrap();
+    file.write_all(format!("{res_2_ocr}").as_bytes()).unwrap();
 
     let mut file = File::create(path_st).unwrap();
     file.write_all("2\n".as_bytes()).unwrap();    
