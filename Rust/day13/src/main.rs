@@ -3,52 +3,67 @@ use std::iter::zip;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::cmp::Ordering;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum CompValue {
-    Left,
-    Right,
-    Undecided,
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum Package {
+    Number(u64),
+    Packages(Vec<Package>),
 }
 
-fn compare(left: &Value, right: &Value) -> Result<CompValue, ()> {
-    match (left, right) {
-        (Value::Number(l), Value::Number(r)) => {
-            if l.as_u64() < r.as_u64() {
-                Ok(CompValue::Left)
-            } else if l == r {
-                Ok(CompValue::Undecided)
-            } else {
-                Ok(CompValue::Right)
-            }
-        },
-        (Value::Number(l), Value::Array(r)) => {
-            compare(&Value::Array(vec![Value::Number(l.to_owned())]), &Value::Array(r.to_vec()))
-        },
-        (Value::Array(l), Value::Number(r)) => {
-            compare(&Value::Array(l.to_vec()), &Value::Array(vec![Value::Number(r.to_owned())]))
-        },
-        (Value::Array(ll), Value::Array(rr)) => {
-            let len_l = ll.len();
-            let len_r = rr.len();
-            let results = zip(ll, rr)
-            .map(|(l, r)| compare(l, r).unwrap())
-            .filter(|res| res != &CompValue::Undecided).collect::<Vec<CompValue>>();
-            if !results.is_empty() {
-                return Ok(results[0]);
-            }
-            if len_l < len_r {
-                Ok(CompValue::Left)
-            } else if len_l == len_r {
-                Ok(CompValue::Undecided)
-            } else {
-                Ok(CompValue::Right)
-            }
-        },
-        _ => {Err(())},
+impl TryFrom<&Value> for Package {
+    type Error = ();
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Number(n) => Ok(Self::Number(n.as_u64().unwrap())),
+            Value::Array(a) => {
+                let b = a.iter().map(|v| Package::try_from(v).unwrap() ).collect::<Vec<Package>>();
+                Ok(Self::Packages(b))
+            },
+            _ => Err(()),
+        }
     }
 }
 
+impl PartialOrd for Package {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (Package::Number(l), Package::Number(r)) => {
+                if l < r {
+                    Some(Ordering::Less)
+                } else if l == r {
+                    Some(Ordering::Equal)
+                } else {
+                    Some(Ordering::Greater)
+                }
+            },
+            (Package::Number(l), Package::Packages(r)) => {
+                Package::Packages(vec![Package::Number(l.to_owned())]).partial_cmp(&Package::Packages(r.to_vec()))
+            },
+            (Package::Packages(l), Package::Number(r)) => {
+                Package::Packages(l.to_vec()).partial_cmp(&Package::Packages(vec![Package::Number(r.to_owned())]))
+            },
+            (Package::Packages(ll), Package::Packages(rr)) => {
+                let len_l = ll.len();
+                let len_r = rr.len();
+                let results = zip(ll, rr)
+                .map(|(l, r)| l.partial_cmp(r).unwrap())
+                .filter(|&x| x != Ordering::Equal)
+                .collect::<Vec<Ordering>>();
+                if !results.is_empty() {
+                    return Some(results[0]);
+                }
+                if len_l < len_r {
+                    Some(Ordering::Less)
+                } else if len_l == len_r {
+                    Some(Ordering::Equal)
+                } else {
+                    Some(Ordering::Greater)
+                }
+            },
+        }
+    }
+}
 
 fn part1(input: &str) -> u32 {
     let mut tot: u32 = 0;
@@ -56,7 +71,7 @@ fn part1(input: &str) -> u32 {
         let mut lines = pair.lines();
         let l: Value = serde_json::from_str(lines.next().unwrap()).unwrap();
         let r: Value = serde_json::from_str(lines.next().unwrap()).unwrap();
-        if compare(&l, &r).unwrap() == CompValue::Left {
+        if &Package::try_from(&l).unwrap() <  &Package::try_from(&r).unwrap() {
             tot += (i as u32)+1;
         }
     }
@@ -65,7 +80,6 @@ fn part1(input: &str) -> u32 {
 
 
 fn main() {
-        
     let path_st = Path::new("status");
 
     let input = include_str!("../input").trim();
@@ -83,7 +97,7 @@ fn main() {
 #[cfg(test)]
 mod test {
     use serde_json::Value;
-    use crate::{CompValue, compare, part1};
+    use crate::{Package, part1};
     use std::iter::zip;
 
     #[test]
@@ -94,8 +108,8 @@ mod test {
         let val_left: Vec<&Value> = v_left.iter().collect();
         let v_right = right.map(|r| serde_json::from_str(r).unwrap());
         let val_right: Vec<&Value> = v_right.iter().collect();
-        let res = zip(val_left, val_right).map(|(l, r)| compare(l, r).unwrap()).collect::<Vec<CompValue>>();
-        assert_eq!(res, vec![CompValue::Left, CompValue::Left, CompValue::Right, CompValue::Left, CompValue::Right, CompValue::Left, CompValue::Right, CompValue::Right]);
+        let res = zip(val_left, val_right).map(|(l, r)| &Package::try_from(l).unwrap() <  &Package::try_from(r).unwrap()).collect::<Vec<bool>>();
+        assert_eq!(res, vec![true, true, false, true, false, true, false, false]);
     }
 
     #[test]
