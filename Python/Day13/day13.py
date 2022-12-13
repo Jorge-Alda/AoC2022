@@ -1,5 +1,6 @@
 from enum import Enum
 from pathlib import Path
+from functools import cmp_to_key
 
 basepath = Path(__file__).parent
 
@@ -8,6 +9,14 @@ class Result(Enum):
     Left = 0
     Right = 1
     Undecided = 2
+
+    def to_int(self) -> int:
+        if self == Result.Left:
+            return -1
+        if self == Result.Undecided:
+            return 0
+        else:
+            return 1
 
 
 def compare(left: int | list, right: int | list) -> Result:
@@ -50,6 +59,17 @@ def part1(inp: str) -> int:
     return tot
 
 
+def part2(inp: str) -> int:
+    packets = [[[2]], [[6]]]
+    for l in inp.split('\n'):
+        if l != "":
+            packets.append(eval(l))
+    packets.sort(key=cmp_to_key(lambda x, y: compare(x, y).to_int()))
+    pos_2 = packets.index([[2]]) + 1
+    pos_6 = packets.index([[6]]) + 1
+    return pos_2 * pos_6
+
+
 if __name__ == '__main__':
     with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
@@ -57,3 +77,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
