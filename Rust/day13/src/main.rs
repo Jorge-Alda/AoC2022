@@ -65,17 +65,54 @@ impl PartialOrd for Package {
     }
 }
 
+impl Ord for Package {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
 fn part1(input: &str) -> u32 {
     let mut tot: u32 = 0;
     for (i, pair) in input.split("\n\n").enumerate() {
         let mut lines = pair.lines();
         let l: Value = serde_json::from_str(lines.next().unwrap()).unwrap();
         let r: Value = serde_json::from_str(lines.next().unwrap()).unwrap();
-        if &Package::try_from(&l).unwrap() <  &Package::try_from(&r).unwrap() {
+        if Package::try_from(&l).unwrap() < Package::try_from(&r).unwrap() {
             tot += (i as u32)+1;
         }
     }
     tot
+}
+
+
+fn part2(input: &str) -> u32 {
+    let v_2: Value = serde_json::from_str("[[2]]").unwrap();
+    let v_6: Value = serde_json::from_str("[[6]]").unwrap();
+    let p2 = Package::try_from(&v_2).unwrap();
+    let p6 = Package::try_from(&v_6).unwrap();
+    let mut res: u32 = 1;
+
+    let mut packages = input.split('\n')
+        .filter(|&l| !l.is_empty() )
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect::<Vec<Value>>()
+        .iter().map(|v| Package::try_from(v).unwrap())
+        .collect::<Vec<Package>>();
+    packages.push(p2);
+    packages.push(p6);
+    packages.sort();
+    let p2 = Package::try_from(&v_2).unwrap();
+    let p6 = Package::try_from(&v_6).unwrap();
+
+    for (i, p) in packages.iter().enumerate() {
+        if p == &p2 {
+            res *= (i as u32) + 1;
+        }
+        if p == &p6 {
+            res *= (i as u32) + 1;
+        }
+    }
+    res
 }
 
 
@@ -84,7 +121,7 @@ fn main() {
 
     let input = include_str!("../input").trim();
     let res_1 = part1(input);
-    //let res_2 = part2(input);
+    let res_2 = part2(input);
     
     let path_o1 = Path::new("output1");
     let mut file = File::create(path_o1).unwrap();
@@ -92,12 +129,19 @@ fn main() {
 
     let mut file = File::create(path_st).unwrap();
     file.write_all("1\n".as_bytes()).unwrap();
+
+    let path_o2 = Path::new("output2");
+    let mut file = File::create(path_o2).unwrap();
+    file.write_all(format!("{res_2}").as_bytes()).unwrap();
+
+    let mut file = File::create(path_st).unwrap();
+    file.write_all("2\n".as_bytes()).unwrap();
 }
 
 #[cfg(test)]
 mod test {
     use serde_json::Value;
-    use crate::{Package, part1};
+    use crate::{Package, part1, part2};
     use std::iter::zip;
 
     #[test]
@@ -108,7 +152,7 @@ mod test {
         let val_left: Vec<&Value> = v_left.iter().collect();
         let v_right = right.map(|r| serde_json::from_str(r).unwrap());
         let val_right: Vec<&Value> = v_right.iter().collect();
-        let res = zip(val_left, val_right).map(|(l, r)| &Package::try_from(l).unwrap() <  &Package::try_from(r).unwrap()).collect::<Vec<bool>>();
+        let res = zip(val_left, val_right).map(|(l, r)| Package::try_from(l).unwrap() <  Package::try_from(r).unwrap()).collect::<Vec<bool>>();
         assert_eq!(res, vec![true, true, false, true, false, true, false, false]);
     }
 
@@ -117,5 +161,13 @@ mod test {
         let input = include_str!("../test").trim();
         let res = part1(input);
         assert_eq!(res, 13);
+    }
+
+
+    #[test]
+    fn test_part2(){
+        let input = include_str!("../test").trim();
+        let res = part2(input);
+        assert_eq!(res, 140);
     }
 }

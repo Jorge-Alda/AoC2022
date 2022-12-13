@@ -88,3 +88,10 @@ assert_eq![v2, []];
 ```
 
 Note that the copied vector needs to be passed as `&mut`, as it will be emptied by `append`.
+
+### Day 13
+
+* Using `serde_json` to parse a list of values and store it in a `Value`.
+
+* `impl`-ementing the `PartialOrd` and `Ord` traits to compare and sort `struct`s or `enum`s.
+  * Traits cannot be implemented in objects defined in a different file.
