@@ -119,6 +119,49 @@ impl BitOr for Interval {
 }
 
 
+impl BitAnd for Interval {
+    type Output = Interval;
+    fn bitand(self, rhs: Self) -> Self::Output {
+        if self.endpoints.is_empty() || rhs.endpoints.is_empty() {
+            Interval {endpoints: vec![]}
+        } else if rhs.endpoints.len() > 2 {
+            let mut res = Interval {endpoints: vec![]};
+            for i in 0..(rhs.endpoints.len()/2) {
+                let inter = self.clone() & Interval::new(rhs.endpoints[2*i].x, rhs.endpoints[2*i+1].x);
+                res = res | inter;
+            }
+            res
+        } else{
+            let mut combined = self.endpoints.clone();
+            combined.push(Point {x: rhs.endpoints[0].x, ext: Extreme::IStart});
+            combined.push(Point {x: rhs.endpoints[1].x, ext: Extreme::IEnd});
+            combined.sort();
+            let mut s_i = false;
+            let mut res = Interval {endpoints: vec![]};
+            for (i, p) in combined.iter().enumerate() {
+                if p.ext == Extreme::IStart{
+                    s_i = true;
+                    if (combined[i+1].ext == Extreme::IEnd) && (combined[i-1].ext == Extreme::End){
+                        return res;
+                    } else if (combined[i+1].ext == Extreme::IEnd) && (combined[i-1].ext == Extreme::Start) {
+                        return rhs;
+                    } else if combined[i+1].ext == Extreme::End {
+                        res.endpoints.push(Point {x: p.x, ext: Extreme::Start});
+                    }
+                } else if p.ext == Extreme::IEnd {
+                    if combined[i-1].ext == Extreme::Start {
+                        res.endpoints.push(Point {x: p.x, ext: Extreme::End});
+                    }
+                    return res;
+                } else if s_i {
+                    res.endpoints.push(*p);
+                }
+            }
+            res
+        }
+    }
+}
+
 fn parse_line(l: &str) -> ((i32, i32), (i32, i32)) {
     let exp = r"Sensor at x=(-?[0-9]*), y=(-?[0-9]*): closest beacon is at x=(-?[0-9]*), y=(-?[0-9]*)";
     let re = Regex::new(exp).unwrap();
@@ -131,14 +174,14 @@ fn parse_line(l: &str) -> ((i32, i32), (i32, i32)) {
 }
 
 #[inline]
-fn dist(p1: (i32, i32), p2: (i32, i32)) -> i32{
+fn dist(p1: &(i32, i32), p2: &(i32, i32)) -> i32{
     (p1.0-p2.0).abs() + (p1.1-p2.1).abs()
 }
 
 
-fn covered_sensor(sensor: (i32, i32), beacon: (i32, i32), target: i32) -> Interval{
+fn covered_sensor(sensor: &(i32, i32), beacon: &(i32, i32), target: i32) -> Interval{
     let d = dist(sensor, beacon);
-    let d_target = dist(sensor, (sensor.0, target));
+    let d_target = dist(sensor, &(sensor.0, target));
     if d_target > d {
         Interval {endpoints: vec![]}
     } else {
@@ -147,7 +190,7 @@ fn covered_sensor(sensor: (i32, i32), beacon: (i32, i32), target: i32) -> Interv
 }
 
 
-fn scan(sensors: Vec<(i32, i32)>, beacons: Vec<(i32, i32)>, target: i32) -> Interval {
+fn scan(sensors: &Vec<(i32, i32)>, beacons: &Vec<(i32, i32)>, target: i32) -> Interval {
     let mut covered = Interval {endpoints: vec![]};
     for (sensor, beacon) in zip(sensors, beacons) {
         covered = covered | covered_sensor(sensor, beacon, target); 
@@ -164,16 +207,35 @@ fn part1(input: &str, target: i32) -> u32 {
         sensors.push(sensor);
         beacons.push(beacon);
     }
-    scan(sensors, beacons, target).length() - 1
+    scan(&sensors, &beacons, target).length() - 1
 }
 
+
+fn part2(input: &str, dim: i32) -> u64 {
+    let mut sensors: Vec<(i32, i32)> = Vec::new();
+    let mut beacons: Vec<(i32, i32)> = Vec::new();
+    for l in input.lines() {
+        let (sensor, beacon) = parse_line(l);
+        sensors.push(sensor);
+        beacons.push(beacon);
+    }
+    for y in 0..=dim {
+        let covered = scan(&sensors, &beacons, y);
+        let clipped = covered & Interval::new(0, dim);
+        if clipped.endpoints.len() == 4 {
+            let x = clipped.endpoints[1].x + 1;
+            return 4_000_000*(x as u64) + (y as u64);
+        }
+    }
+    0
+}
 
 fn main() {
     let path_st = Path::new("status");
 
     let input = include_str!("../input").trim();
     let res_1 = part1(input, 2000000);
-    //let res_2 = part2(input);
+    let res_2 = part2(input, 4_000_000);
     
     let path_o1 = Path::new("output1");
     let mut file = File::create(path_o1).unwrap();
@@ -181,18 +243,32 @@ fn main() {
 
     let mut file = File::create(path_st).unwrap();
     file.write_all("1\n".as_bytes()).unwrap();
+
+    let path_o2 = Path::new("output2");
+    let mut file = File::create(path_o2).unwrap();
+    file.write_all(format!("{res_2}").as_bytes()).unwrap();
+
+    let mut file = File::create(path_st).unwrap();
+    file.write_all("2\n".as_bytes()).unwrap();
 }
 
 
 
 #[cfg(test)]
 mod test {
-    use crate::{Interval, part1};
+    use crate::{Interval, part1, part2};
     #[test]
     fn test_part1(){
         let input = include_str!("../test").trim();
         let res = part1(input, 10);
         assert_eq!(res, 26);
+    }
+
+    #[test]
+    fn test_part2(){
+        let input = include_str!("../test").trim();
+        let res = part2(input, 20);
+        assert_eq!(res, 56000011);
     }
 
     #[test]
@@ -231,5 +307,43 @@ mod test {
         let i1 = Interval::new(1, 2) | Interval::new(3, 4);
         let i2 = Interval::new(1, 4);
         assert_eq!(i1, i2);
+    }
+
+    #[test]
+    fn inter_contained() {
+        let i1 = Interval::new(1, 10) & Interval::new(4, 5);
+        let i2 = Interval::new(4, 5);
+        assert_eq!(i1, i2);
+    }
+
+    #[test]
+    fn inter_overlap() {
+        let i1 = Interval::new(1, 10) & Interval::new(7, 13);
+        let i2 = Interval::new(7, 10);
+        assert_eq!(i1, i2);
+    }
+
+    #[test]
+    fn inter_coincidence() {
+        let i1 = Interval::new(1, 10) & Interval::new(7, 10);
+        let i2 = Interval::new(7, 10);
+        assert_eq!(i1, i2);
+    }
+
+    #[test]
+    fn inter_union() {
+        let i1 = Interval::new(1, 5) | Interval::new(8, 11);
+        let i2 = i1 & Interval::new(3, 10);
+        let i3 = Interval::new(3, 5) | Interval::new(8, 10);
+        assert_eq!(i2, i3);
+    }
+
+    #[test]
+    fn inter_mulunion() {
+        let i1 = Interval::new(1, 5) | Interval::new(8, 15);
+        let i2 = Interval::new(3, 10) | Interval::new(13, 21);
+        let ires = i1 & i2;
+        let i3 = Interval::new(3, 5) | Interval::new(8, 10) | Interval::new(13, 15);
+        assert_eq!(ires, i3);
     }
 }
