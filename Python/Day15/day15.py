@@ -30,7 +30,7 @@ class Interval:
     def __len__(self) -> int:
         l = 0
         for i in range(len(self.endpoints)//2):
-            l += self.endpoints[2*i+1] - self.endpoints[2*i] + 1
+            l += self.endpoints[2*i+1][0] - self.endpoints[2*i][0] + 1
         return l
 
     def __repr__(self) -> str:
@@ -134,12 +134,12 @@ def covered_sensor(sensor: tuple[int, int],
 
 def scan_line(sensors: list[tuple[int, int]],
               beacons: list[tuple[int, int]],
-              target: int) -> set[int]:
-    covered = set()
+              target: int) -> Interval:
+    covered = Interval()
     for sensor, beacon in zip(sensors, beacons):
         try:
             range_y = covered_sensor(sensor, beacon, target)
-            covered |= set(range(range_y[0], range_y[1]))
+            covered |= Interval.new(range_y[0], range_y[1])
         except ValueError:
             pass
     return covered
@@ -151,19 +151,21 @@ def part1(input: str, target: int) -> int:
         sensor, beacon = parse_line(l)
         sensors.append(sensor)
         beacons.append(beacon)
-    return len(scan_line(sensors, beacons, target))
+    return len(scan_line(sensors, beacons, target))-1
 
 
 def part2(input: str, dim: int) -> int:
-    sensors, beacons, dists = [], [], []
+    sensors, beacons = [], []
     for l in input.split('\n'):
         sensor, beacon = parse_line(l)
         sensors.append(sensor)
         beacons.append(beacon)
-        dists.append(dist(sensor, beacon))
-    for x, y in product(range(dim+1), range(dim+1)):
-        if not any(dist((x, y), s) <= d for s, d in zip(sensors, dists)):
-            return 4_000_000*x+y
+    for y in range(dim+1):
+        covered = scan_line(sensors, beacons, y)
+        clipped = covered & Interval.new(0, dim)
+        if len(clipped.endpoints) == 4:
+            x = clipped.endpoints[1][0] + 1
+            return 4_000_000*x + y
     return 0
 
 
@@ -174,3 +176,7 @@ if __name__ == '__main__':
     out1 = part1(inp, 2000000)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp, 4_000_000)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
