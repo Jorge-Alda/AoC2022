@@ -95,3 +95,20 @@ Note that the copied vector needs to be passed as `&mut`, as it will be emptied 
 
 * `impl`-ementing the `PartialOrd` and `Ord` traits to compare and sort `struct`s or `enum`s.
   * Traits cannot be implemented in objects defined in a different file.
+
+### Day 15
+
+* Regex with the crate [Regex](https://docs.rs/regex/latest/regex/).
+* Syntax for `impl`-ementing `Debug` or `Display`: the macro `write!` modifies the `Formatter` object and returns a `fmt::Result`:
+
+```rust
+impl Display for MyStruct {
+  fn fmt(&self, f_ &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let s = String::new();
+    // ... obtain s
+    write!(f, "{}", s)
+  }
+}
+```
+
+* Beware! Numerical overflows don't give a warning!
