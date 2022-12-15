@@ -1,6 +1,5 @@
 import re
 from itertools import product
-from copy import deepcopy
 from typing import Self
 from enum import Enum
 from pathlib import Path
@@ -11,6 +10,8 @@ basepath = Path(__file__).parent
 class Extreme(Enum):
     Start = 0
     End = 1
+    IStart = 2
+    IEnd = 3
 
 
 class Interval:
@@ -73,28 +74,40 @@ class Interval:
             res.endpoints.append(new_endpoints[-1])
         return res
 
-
-"""     def __or__(self, rhs: Self) -> Self:
+    def __and__(self, rhs: Self) -> Self:
         if not isinstance(rhs, Interval):
             raise ValueError
-        res = Interval()
-        if len(self.starts) == 0:
-            res.starts = rhs.starts
-            res.ends = rhs.ends
-        elif rhs.starts[0] > self.ends[-1]:
-            res.starts = self.starts + rhs.starts
-            res.ends = self.ends + rhs.ends
-        elif rhs.ends[-1] < self.starts[0]:
-            res.starts = rhs.starts + self.starts
-            res.ends = rhs.ends + self.ends
+        if len(self.endpoints) == 0 or len(rhs.endpoints) == 0:
+            return Interval()
+        elif len(rhs.endpoints) > 2:
+            res = Interval()
+            for i in range(len(rhs.endpoints)//2):
+                inter = self & Interval.new(
+                    rhs.endpoints[2*i][0], rhs.endpoints[2*i+1][0])
+                res |= inter
+            return res
         else:
-            for i in range(len(self.starts)):
-                if self.starts[i] < rhs.starts[0] and self.ends[i] > rhs.ends[-1]:
-                    res.starts = self.starts
-                    res.ends = self.ends
-
-        #old_endpoints = deepcopy(self.endpoints)
-        return res """
+            combined = sorted(
+                self.endpoints + [(rhs.endpoints[0][0], Extreme.IStart), (rhs.endpoints[1][0], Extreme.IEnd)], key=lambda p: p[0])
+            s_i = False
+            s = False
+            res = Interval()
+            for i, p in enumerate(combined):
+                if p[1] == Extreme.IStart:
+                    s_i = True
+                    if (combined[i+1][1] == Extreme.IEnd) and (combined[i-1][1] == Extreme.End):
+                        return res
+                    elif (combined[i+1][1] == Extreme.IEnd) and (combined[i-1][1] == Extreme.Start):
+                        return rhs
+                    elif combined[i+1][1] == Extreme.End:
+                        res.endpoints.append((p[0], Extreme.Start))
+                elif p[1] == Extreme.IEnd:
+                    if combined[i-1][1] == Extreme.Start:
+                        res.endpoints.append((p[0], Extreme.End))
+                    return res
+                elif s_i:
+                    res.endpoints.append(p)
+            return res
 
 
 def parse_line(l: str) -> tuple[tuple[int, int], tuple[int, int]]:

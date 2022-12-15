@@ -53,3 +53,36 @@ class TestIntervals:
         i1 = Interval.new(1, 2) | Interval.new(3, 4)
         i2 = Interval.new(1, 4)
         assert i1 == i2
+
+    @staticmethod
+    def test_inter_contained():
+        i1 = Interval.new(1, 10) & Interval.new(4, 5)
+        i2 = Interval.new(4, 5)
+        assert i1 == i2
+
+    @staticmethod
+    def test_inter_overlap():
+        i1 = Interval.new(1, 10) & Interval.new(7, 13)
+        i2 = Interval.new(7, 10)
+        assert i1 == i2
+
+    @staticmethod
+    def test_inter_coincidence():
+        i1 = Interval.new(1, 10) & Interval.new(7, 10)
+        i2 = Interval.new(7, 10)
+        assert i1 == i2
+
+    @staticmethod
+    def test_inter_union():
+        i1 = Interval.new(1, 5) | Interval.new(8, 11)
+        i2 = i1 & Interval.new(3, 10)
+        i3 = Interval.new(3, 5) | Interval.new(8, 10)
+        assert i2 == i3
+
+    @staticmethod
+    def test_inter_mulunion():
+        i1 = Interval.new(1, 5) | Interval.new(8, 15)
+        i2 = Interval.new(3, 10) | Interval.new(13, 21)
+        ires = i1 & i2
+        i3 = Interval.new(3, 5) | Interval.new(8, 10) | Interval.new(13, 15)
+        assert ires == i3
