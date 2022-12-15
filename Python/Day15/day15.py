@@ -33,7 +33,13 @@ class Interval:
         return l
 
     def __repr__(self) -> str:
-        return ", ".join(f"[{str(self.endpoints[2*i])}, {self.endpoints[2*i+1]}]" for i in range(len(self.endpoints)//2))
+        return ", ".join(f"[{str(self.endpoints[2*i][0])}, {self.endpoints[2*i+1][0]}]" for i in range(len(self.endpoints)//2))
+
+    def __eq__(self, rhs: Self) -> bool:
+        if not isinstance(rhs, Interval):
+            raise ValueError
+        return self.endpoints == rhs.endpoints
+
 
     def __or__(self, rhs: Self) -> Self:
         if not isinstance(rhs, Interval):
@@ -43,7 +49,7 @@ class Interval:
             res.endpoints = rhs.endpoints
         else:
             combined = sorted(self.endpoints + rhs.endpoints,
-                              key=lambda p: p[0])
+                              key=lambda p: p[0] + 0.01*(p[1].value))
             s = 0
             start_val = 0
             new_endpoints = []
@@ -59,7 +65,12 @@ class Interval:
                     s += 1
                 else:
                     s -= 1
-            res.endpoints = new_endpoints
+            res.endpoints.append(new_endpoints[0])
+            for i in range(len(new_endpoints)//2-1):
+                if new_endpoints[2*i+1][0] + 1 != new_endpoints[2*i+2][0]:
+                    res.endpoints.append(new_endpoints[2*i+1])
+                    res.endpoints.append(new_endpoints[2*i+2])
+            res.endpoints.append(new_endpoints[-1])
         return res
 
 
