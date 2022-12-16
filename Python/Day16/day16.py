@@ -40,6 +40,7 @@ class GraphPlotter:
 
         pos = nx.kamada_kawai_layout(self.g)
         nx.draw_networkx(self.g, pos=pos, node_color=node_colors)
+        fig.canvas.flush_events()
 
 
 def parse_valve(inp: str, id: int) -> Valve:
@@ -77,18 +78,23 @@ def next_target(g: nx.Graph, pos: str, rem_t: int) -> list[str]:
 
 
 def part1(inp: str):
+    plt.ion()
     g = parse_graph(inp)
     pressure = 0
     flow = 0
     pos = "AA"
-    path = []
-    fig = plt.figure()
-    plt.ion()
-    plt.show()
+    path = next_target(g, "AA", 30)
+    # paths = [["CC", "DD"], ["EE", "FF", "GG"], ["HH", "GG", "FF", "EE",
+    # "DD", "AA", "II"], ["JJ", "II", "AA"], ["BB", "CC"], ["DD"]]
+    # path = paths.pop()
+    fig, ax = plt.subplots()
     plotter = GraphPlotter()
+    plotter(g, fig, pos)
     for t in range(30):
+        new_flow = 0
+        pressure += flow
         if not g.nodes[pos]["opened"]:
-            flow += g.nodes[pos]["pressure"]
+            new_flow = g.nodes[pos]["pressure"]
             g.nodes[pos]["opened"] = True
         elif len(path) > 0:
             pos = path.pop()
@@ -96,13 +102,19 @@ def part1(inp: str):
             path = next_target(g, pos, 30-t)
             if len(path) > 0:
                 pos = path.pop()
-        pressure += flow
-        print(f"{t}\t{flow}")
+
+            # path = next_target(g, pos, 30-t)
+            # if len(path) > 0:
+            #    pos = path.pop()
+        print(f"{t+1}\t{pos}\t{flow=}\t{pressure=}")
+        flow += new_flow
         plotter(g, fig, pos)
         sleep(2)
+    return pressure
 
 if __name__ == '__main__':
     with open(basepath/"test", "rt") as f:
         inp = f.read().strip()
 
-    part1(inp)
+    p = part1(inp)
+    print(p)
