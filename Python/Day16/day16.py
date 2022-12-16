@@ -11,7 +11,7 @@ class Valve:
         self.id = id
         self.pressure = pressure
         self.neighbors = neighbors
-        self.opened = False
+        self.opened = (pressure == 0)
 
 
 class GraphPlotter:
@@ -30,7 +30,7 @@ class GraphPlotter:
                 alpha = 1.0
             else:
                 alpha = 0.3
-            if data["opened"] or data["pressure"] == 0:
+            if data["opened"]:
                 node_colors.append((0.0, 1.0, 0.0, alpha))
             else:
                 node_colors.append((1.0, 0.0, 0.0, alpha))
@@ -50,11 +50,20 @@ def parse_valve(inp: str, id: int) -> Valve:
 
 def parse_graph(inp: str) -> nx.Graph:
     valves = [parse_valve(l, i) for i, l in enumerate(inp.split('\n'))]
-    valves_dict = {valve.name: valve for valve in valves}
     g = nx.Graph()
     for v in valves:
-        g.add_node(v.name, opened=False, pressure=v.pressure)
+        g.add_node(v.name, opened=v.opened, pressure=v.pressure)
     for v in valves:
         for n in v.neighbors:
             g.add_edge(v.name, n)
     return g
+
+
+def next_target(g: nx.Graph, pos: str, rem_t: int) -> list[str]:
+    scores = {}
+    for n, ndata in g.nodes(data=True):
+        if n != pos and not ndata["opened"]:
+            path = "".join(nx.shortest_path(g, pos, n)[1:])
+            scores |= {path: ndata["pressure"]*(rem_t-len(path)//2-1)}
+    path_max = max(scores.items(), key=lambda x: x[1])
+    return [path_max[0][2*i:2*i+2] for i in range(len(path_max[0])//2)]
