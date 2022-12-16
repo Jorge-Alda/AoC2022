@@ -3,7 +3,10 @@ from copy import deepcopy
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+from time import sleep
+from pathlib import Path
 
+basepath = Path(__file__).parent
 
 class Valve:
     def __init__(self, name: str, id: int, pressure: int, neighbors: list[str]) -> None:
@@ -24,7 +27,7 @@ class GraphPlotter:
         fig.clear()
         fig.canvas.draw()
         node_colors = []
-        widths = []
+        max_p = max(data["pressure"] for _, data in self.g.nodes(data=True))
         for n, data in self.g.nodes(data=True):
             if n == current:
                 alpha = 1.0
@@ -33,7 +36,7 @@ class GraphPlotter:
             if data["opened"]:
                 node_colors.append((0.0, 1.0, 0.0, alpha))
             else:
-                node_colors.append((1.0, 0.0, 0.0, alpha))
+                node_colors.append((1.0, 0.0, data["pressure"]/max_p, alpha))
 
         pos = nx.kamada_kawai_layout(self.g)
         nx.draw_networkx(self.g, pos=pos, node_color=node_colors)
@@ -65,5 +68,41 @@ def next_target(g: nx.Graph, pos: str, rem_t: int) -> list[str]:
         if n != pos and not ndata["opened"]:
             path = "".join(nx.shortest_path(g, pos, n)[1:])
             scores |= {path: ndata["pressure"]*(rem_t-len(path)//2-1)}
-    path_max = max(scores.items(), key=lambda x: x[1])
-    return [path_max[0][2*i:2*i+2] for i in range(len(path_max[0])//2)]
+    if len(scores.keys()) > 0:
+        path_max = max(scores.items(), key=lambda x: x[1])
+        l = len(path_max[0])
+        return [path_max[0][l-2*i-2:l-2*i] for i in range(l//2)]
+    else:
+        return []
+
+
+def part1(inp: str):
+    g = parse_graph(inp)
+    pressure = 0
+    flow = 0
+    pos = "AA"
+    path = []
+    fig = plt.figure()
+    plt.ion()
+    plt.show()
+    plotter = GraphPlotter()
+    for t in range(30):
+        if not g.nodes[pos]["opened"]:
+            flow += g.nodes[pos]["pressure"]
+            g.nodes[pos]["opened"] = True
+        elif len(path) > 0:
+            pos = path.pop()
+        else:
+            path = next_target(g, pos, 30-t)
+            if len(path) > 0:
+                pos = path.pop()
+        pressure += flow
+        print(f"{t}\t{flow}")
+        plotter(g, fig, pos)
+        sleep(2)
+
+if __name__ == '__main__':
+    with open(basepath/"test", "rt") as f:
+        inp = f.read().strip()
+
+    part1(inp)
