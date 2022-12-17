@@ -14,6 +14,10 @@ class BaseShape(ABC):
     def coordinates(self) -> list[tuple[int, int]]:
         pass
 
+    @abstractmethod
+    def code(self) -> str:
+        pass
+
     def move(self, direction: str) -> Self:
         if direction == '>':
             return self.__class__(self.x+1, self.y)
@@ -33,25 +37,40 @@ class Horizontal(BaseShape):
     def coordinates(self) -> list[tuple[int, int]]:
         return [(self.x, self.y), (self.x+1, self.y), (self.x+2, self.y), (self.x+3, self.y)]
 
+    def code(self) -> str:
+        return "_"
+
 
 class Plus(BaseShape):
     def coordinates(self) -> list[tuple[int, int]]:
         return [(self.x, self.y+1), (self.x+1, self.y), (self.x+1, self.y+1), (self.x+1, self.y+2), (self.x+2, self.y+1)]
+
+    def code(self) -> str:
+        return "+"
 
 
 class Angle(BaseShape):
     def coordinates(self) -> list[tuple[int, int]]:
         return [(self.x, self.y), (self.x+1, self.y), (self.x+2, self.y), (self.x+2, self.y+1), (self.x+2, self.y+2)]
 
+    def code(self) -> str:
+        return "L"
+
 
 class Vertical(BaseShape):
     def coordinates(self) -> list[tuple[int, int]]:
         return [(self.x, self.y), (self.x, self.y+1), (self.x, self.y+2), (self.x, self.y+3)]
 
+    def code(self) -> str:
+        return "|"
+
 
 class Block(BaseShape):
     def coordinates(self) -> list[tuple[int, int]]:
         return [(self.x, self.y), (self.x+1, self.y), (self.x, self.y+1), (self.x+1, self.y+1)]
+
+    def code(self) -> str:
+        return "#"
 
 
 def directions(text: str) -> Generator[str, None, None]:
@@ -61,6 +80,13 @@ def directions(text: str) -> Generator[str, None, None]:
         yield text[n]
         n = (n+1) % l
 
+
+def enu_directions(text: str) -> Generator[tuple[int, str], None, None]:
+    l = len(text)
+    n = 0
+    while 1:
+        yield n, text[n]
+        n = (n+1) % l
 
 def newrock() -> Generator[BaseShape, int | None, None]:
     n = 0
@@ -106,8 +132,48 @@ def part1(dirs: str, n: int) -> int:
             height = max(c[1] for c in rocks)
             rock = generate_rocks.send(height)
             rocks = delete_rows(rocks)
-            if i % 1_000_000 == 0:
-                print(i)
+        else:
+            rock = r_fall
+    return height
+
+
+def part2(dirs: str, n: int) -> int:
+    rocks: set[tuple[int, int]] = set((x, 0) for x in range(7))
+    height = 0
+    generate_rocks = newrock()
+    rock = generate_rocks.send(None)
+    generate_dirs = enu_directions(dirs)
+    patterns: dict[str, tuple[int, int]] = {}
+    found = False
+    i = 0
+    while i < n:
+        ndir, d = next(generate_dirs)
+        r_moved = rock.move(d)
+        if not r_moved.collision(rocks):
+            rock = r_moved
+        r_fall = rock.fall()
+        if r_fall.collision(rocks):
+            i += 1
+            rocks |= set(rock.coordinates())
+            height = max(c[1] for c in rocks)
+            rocks = delete_rows(rocks)
+            if not found:
+                move_hash = rock.code() + f"|{ndir:05}|"
+                move_hash += "|".join(["".join([f"{height-r[1]:03}" for r in sorted(
+                    rocks, key=lambda x: x[1]) if r[0] == x]) for x in range(7)])
+                if move_hash not in patterns:
+                    patterns[move_hash] = (i, height)
+                else:
+                    found = True
+                    warmup_it, warmup_height = patterns[move_hash]
+                    delta_it = i - warmup_it
+                    delta_height = height - warmup_height
+                    nloops = (n-warmup_it)//delta_it
+                    i = warmup_it + delta_it * nloops
+                    height = warmup_height + delta_height * nloops
+                    rocks = {(r[0], r[1]+(nloops-1)*delta_height)
+                             for r in rocks}
+            rock = generate_rocks.send(height)
         else:
             rock = r_fall
     return height
@@ -121,6 +187,6 @@ if __name__ == '__main__':
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
 
-    out2 = part1(inp, 1_000_000_000_000)
+    out2 = part2(inp, 1_000_000_000_000)
     with open(basepath/"output2", "wt") as f:
         f.write(str(out2))
