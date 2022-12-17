@@ -24,7 +24,7 @@ class BaseShape(ABC):
     def fall(self) -> Self:
         return self.__class__(self.x, self.y-1)
 
-    def collision(self, rocks: list[tuple[int, int]]) -> bool:
+    def collision(self, rocks: set[tuple[int, int]]) -> bool:
         coords = self.coordinates()
         return any(c[0] < 0 for c in coords) or any(c[0] > 6 for c in coords) or any(c in rocks for c in coords)
 
@@ -74,8 +74,21 @@ def newrock() -> Generator[BaseShape, int | None, None]:
         n = (n+1) % 5
 
 
+def delete_rows(rocks: set[tuple[int, int]]) -> set[tuple[int, int]]:
+    base = min(r[1] for r in rocks)
+    height = max(r[1] for r in rocks)
+    holes = [{x for x in range(7) if (x, y) not in rocks}
+             for y in range(base, height+1)]
+    limit = base
+    for i in range(max(0, len(holes)-4)):
+        if len(holes[i] & holes[i+1] & holes[i+2] & holes[i+3]) == 0:
+            limit += 1
+    res = {r for r in rocks if r[1] >= limit-1}
+    return res
+
+
 def part1(dirs: str, n: int) -> int:
-    rocks = [(x, 0) for x in range(7)]
+    rocks: set[tuple[int, int]] = set((x, 0) for x in range(7))
     height = 0
     generate_rocks = newrock()
     rock = generate_rocks.send(None)
@@ -89,9 +102,12 @@ def part1(dirs: str, n: int) -> int:
         r_fall = rock.fall()
         if r_fall.collision(rocks):
             i += 1
-            rocks += rock.coordinates()
+            rocks |= set(rock.coordinates())
             height = max(c[1] for c in rocks)
             rock = generate_rocks.send(height)
+            rocks = delete_rows(rocks)
+            if i % 1_000_000 == 0:
+                print(i)
         else:
             rock = r_fall
     return height
@@ -104,3 +120,7 @@ if __name__ == '__main__':
     out1 = part1(inp, 2022)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part1(inp, 1_000_000_000_000)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
