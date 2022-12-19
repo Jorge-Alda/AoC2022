@@ -139,6 +139,12 @@ def qualy(bp: Blueprint) -> int:
     return bp.quality(24)
 
 
+def max_geo(bp: Blueprint) -> int:
+    m = Mining(bp, 32)
+    m.next_step({})
+    return m.max_geo
+
+
 def part1(inp: str) -> int:
     bps = (Blueprint(l.strip()) for l in inp.splitlines())
 
@@ -148,6 +154,15 @@ def part1(inp: str) -> int:
     return sum(q)
 
 
+def part2(inp: str) -> int:
+    bps = [Blueprint(l.strip()) for _, l in zip([0, 1, 2], inp.splitlines())]
+
+    with Pool(processes=3) as pool:
+        q = pool.map(max_geo, bps)
+
+    return q[0] * q[1] * q[2]
+
+
 if __name__ == '__main__':
     with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
@@ -155,3 +170,7 @@ if __name__ == '__main__':
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
