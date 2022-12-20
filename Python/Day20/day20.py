@@ -24,7 +24,7 @@ def to_dllist(l: list[T]) -> list[Element[T]]:
 
 
 def move_right(l: list[Element], pos: int, num: int = 0):
-    for _ in range(num):
+    for _ in range(num % (len(l)-1)):
         right = l[pos].right
         rright = l[right].right
         left = l[pos].left
@@ -33,7 +33,7 @@ def move_right(l: list[Element], pos: int, num: int = 0):
 
 
 def move_left(l: list[Element], pos: int, num: int = 0):
-    for _ in range(num):
+    for _ in range(num % (len(l)-1)):
         left = l[pos].left
         lleft = l[left].left
         right = l[pos].right
@@ -65,6 +65,18 @@ def part1(inp: str) -> int:
     return transverse_right(dlinked, pos_0, 1000) + transverse_right(dlinked, pos_0, 2000) + transverse_right(dlinked, pos_0, 3000)
 
 
+def part2(inp: str) -> int:
+    key = 811589153
+    parsed = [int(l)*key for l in inp.splitlines()]
+    dlinked = to_dllist(parsed)
+    pos_0 = 0
+    for _ in range(10):
+        for i in range(len(dlinked)):
+            move(dlinked, i, dlinked[i].val)
+            if dlinked[i].val == 0:
+                pos_0 = i
+    return transverse_right(dlinked, pos_0, 1000) + transverse_right(dlinked, pos_0, 2000) + transverse_right(dlinked, pos_0, 3000)
+
 if __name__ == "__main__":
     with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
@@ -72,3 +84,7 @@ if __name__ == "__main__":
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
+
+    out2 = part2(inp)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
