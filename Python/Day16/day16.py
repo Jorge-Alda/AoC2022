@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from time import sleep
 from pathlib import Path
+import itertools
 
 basepath = Path(__file__).parent
+
 
 class Valve:
     def __init__(self, name: str, id: int, pressure: int, neighbors: list[str]) -> None:
@@ -63,58 +65,48 @@ def parse_graph(inp: str) -> nx.Graph:
     return g
 
 
-def next_target(g: nx.Graph, pos: str, rem_t: int) -> list[str]:
-    scores = {}
-    for n, ndata in g.nodes(data=True):
-        if n != pos and not ndata["opened"]:
-            path = "".join(nx.shortest_path(g, pos, n)[1:])
-            scores |= {path: ndata["pressure"]*(rem_t-len(path)//2-1)}
-    if len(scores.keys()) > 0:
-        path_max = max(scores.items(), key=lambda x: x[1])
-        l = len(path_max[0])
-        return [path_max[0][l-2*i-2:l-2*i] for i in range(l//2)]
-    else:
-        return []
-
-
 def part1(inp: str):
-    plt.ion()
     g = parse_graph(inp)
-    pressure = 0
-    flow = 0
-    pos = "AA"
-    path = next_target(g, "AA", 30)
-    # paths = [["CC", "DD"], ["EE", "FF", "GG"], ["HH", "GG", "FF", "EE",
-    # "DD", "AA", "II"], ["JJ", "II", "AA"], ["BB", "CC"], ["DD"]]
-    # path = paths.pop()
-    fig, ax = plt.subplots()
-    plotter = GraphPlotter()
-    plotter(g, fig, pos)
-    for t in range(30):
-        new_flow = 0
-        pressure += flow
-        if not g.nodes[pos]["opened"]:
-            new_flow = g.nodes[pos]["pressure"]
-            g.nodes[pos]["opened"] = True
-        elif len(path) > 0:
-            pos = path.pop()
-        else:
-            path = next_target(g, pos, 30-t)
-            if len(path) > 0:
-                pos = path.pop()
+    pressurized = ["AA"]
+    distances = {}
+    max_pres = 0
+    for node in g.nodes():
+        if g.nodes[node]["pressure"] > 0:
+            pressurized.append(node)
+    for i in range(len(pressurized)):
+        for j in range(1+i, len(pressurized)):
+            d = nx.shortest_path_length(g, pressurized[i], pressurized[j])
+            distances |= {(pressurized[i], pressurized[j]): d,
+                          (pressurized[j], pressurized[i]): d}
+    return follow_path(g, distances, "AA", 30, set(pressurized[1:]), 0)
 
-            # path = next_target(g, pos, 30-t)
-            # if len(path) > 0:
-            #    pos = path.pop()
-        print(f"{t+1}\t{pos}\t{flow=}\t{pressure=}")
-        flow += new_flow
-        plotter(g, fig, pos)
-        sleep(2)
-    return pressure
+
+def follow_path(g: nx.Graph,
+                distances: dict[tuple[str, str], int],
+                pos: str,
+                t: int,
+                valves: set[str],
+                max_pres: int) -> int:
+    if len(valves) == 0:
+        print(max_pres)
+        return max_pres
+    pres: list[int] = []
+    for v in valves:
+        dist = distances[(pos, v)]
+        if t > dist:
+            new_pres = max_pres + (t - dist - 1) * g.nodes[v]["pressure"]
+            p = follow_path(g, distances, v, t-dist-1, valves - {v}, new_pres)
+            if p is not None:
+                pres.append(p)
+        else:
+            pres.append(max_pres)
+    return max(pres)
+
 
 if __name__ == '__main__':
-    with open(basepath/"test", "rt") as f:
+    with open(basepath/"input", "rt") as f:
         inp = f.read().strip()
 
-    p = part1(inp)
-    print(p)
+    out1 = part1(inp)
+    with open(basepath/"output1", "wt") as f:
+        f.write(str(out1))
