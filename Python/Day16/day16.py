@@ -65,11 +65,10 @@ def parse_graph(inp: str) -> nx.Graph:
     return g
 
 
-def part1(inp: str):
+def part1(inp: str) -> tuple[int, str]:
     g = parse_graph(inp)
     pressurized = ["AA"]
     distances = {}
-    max_pres = 0
     for node in g.nodes():
         if g.nodes[node]["pressure"] > 0:
             pressurized.append(node)
@@ -78,7 +77,7 @@ def part1(inp: str):
             d = nx.shortest_path_length(g, pressurized[i], pressurized[j])
             distances |= {(pressurized[i], pressurized[j]): d,
                           (pressurized[j], pressurized[i]): d}
-    return follow_path(g, distances, "AA", 30, set(pressurized[1:]), 0)
+    return follow_path(g, distances, "AA", 30, set(pressurized[1:]), 0, "")
 
 
 def follow_path(g: nx.Graph,
@@ -86,21 +85,22 @@ def follow_path(g: nx.Graph,
                 pos: str,
                 t: int,
                 valves: set[str],
-                max_pres: int) -> int:
+                max_pres: int,
+                path: str) -> tuple[int, str]:
     if len(valves) == 0:
         print(max_pres)
-        return max_pres
-    pres: list[int] = []
+        return max_pres, path
+    pres: list[tuple[int, str]] = []
     for v in valves:
         dist = distances[(pos, v)]
         if t > dist:
             new_pres = max_pres + (t - dist - 1) * g.nodes[v]["pressure"]
-            p = follow_path(g, distances, v, t-dist-1, valves - {v}, new_pres)
-            if p is not None:
-                pres.append(p)
+            p = follow_path(g, distances, v, t-dist-1,
+                            valves - {v}, new_pres, path + v)
+            pres.append(p)
         else:
-            pres.append(max_pres)
-    return max(pres)
+            pres.append((max_pres, path))
+    return max(pres, key=lambda x: x[0])
 
 
 if __name__ == '__main__':
@@ -109,4 +109,4 @@ if __name__ == '__main__':
 
     out1 = part1(inp)
     with open(basepath/"output1", "wt") as f:
-        f.write(str(out1))
+        f.write(str(out1[0]))

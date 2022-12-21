@@ -8,4 +8,11 @@ def test_part1():
     with open(basepath/"test", "rt") as f:
         inp = f.read().strip()
     out = part1(inp)
-    assert out == 1651
+    assert out[0] == 1651
+
+
+def test_part1_path():
+    with open(basepath/"test", "rt") as f:
+        inp = f.read().strip()
+    out = part1(inp)
+    assert out[1] == "DDBBJJHHEECC"
