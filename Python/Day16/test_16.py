@@ -1,4 +1,4 @@
-from day16 import part1
+from day16 import part1, part2
 from pathlib import Path
 
 basepath = Path(__file__).parent
@@ -8,11 +8,11 @@ def test_part1():
     with open(basepath/"test", "rt") as f:
         inp = f.read().strip()
     out = part1(inp)
-    assert out[0] == 1651
+    assert out == 1651
 
 
-def test_part1_path():
+def test_part2():
     with open(basepath/"test", "rt") as f:
         inp = f.read().strip()
-    out = part1(inp)
-    assert out[1] == "DDBBJJHHEECC"
+    out = part2(inp)
+    assert out == 1707
