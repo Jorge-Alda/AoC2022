@@ -22,7 +22,7 @@ AoC already started!
 * [Day 18](Day18)🟩
 * [Day 19](Day19)🟩
 * [Day 20](Day20)🟩
-* [Day 21](Day21)🟨
+* [Day 21](Day21)🟩
 
-Puzzles completed: 39/42 (92.86%)
-Days completed: 19/21 (90.48%)
+Puzzles completed: 40/42 (95.24%)
+Days completed: 20/21 (95.24%)
