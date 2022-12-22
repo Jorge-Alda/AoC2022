@@ -46,11 +46,12 @@ def score(p: Point) -> int:
     return 1000 * (p[1]+1) + 4 * (p[0] + 1)
 
 
-def parse(inp: str) -> tuple[list[int], list[str], defaultdict[Point, dict[Direction, Point]]]:
+def parse(inp: str) -> tuple[list[int], list[str], defaultdict[Point, dict[Direction, tuple[Point, Direction]]]]:
     raw_map, raw_moves = tuple(inp.split('\n\n'))
     moves = list(reversed([int(m) for m in re.findall(r"[0-9]+", raw_moves)]))
     turns = list(reversed(re.findall(r"[LR]", raw_moves)))
-    dict_map: defaultdict[Point, dict[Direction, Point]] = defaultdict(dict)
+    dict_map: defaultdict[Point, dict[Direction,
+                                      tuple[Point, Direction]]] = defaultdict(dict)
     for y, l in enumerate(raw_map.splitlines()):
         m = re.match(r"(\s*)([.#]+)", l)
         if m is not None:
@@ -59,19 +60,27 @@ def parse(inp: str) -> tuple[list[int], list[str], defaultdict[Point, dict[Direc
             for x in range(len(full_line)):
                 if full_line[x] == ".":
                     if x == 0:
-                        left = len(full_line) - 1
+                        xf = len(full_line) - 1 + blanks
+                        yf = y
+                        f = Direction.Left
                     else:
-                        left = x - 1
-                    if full_line[left] == ".":
+                        xf = x - 1 + blanks
+                        yf = y
+                        f = Direction.Left
+                    if raw_map.splitlines()[yf][xf] == ".":
                         dict_map[(x + blanks, y)
-                                 ] |= {Direction.Left: (left + blanks, y)}
+                                 ] |= {Direction.Left: ((xf, y), f)}
                     if x == len(full_line) - 1:
-                        right = 0
+                        xf = blanks
+                        yf = y
+                        f = Direction.Right
                     else:
-                        right = x + 1
-                    if full_line[right] == ".":
+                        xf = x + 1 + blanks
+                        yf = y
+                        f = Direction.Right
+                    if raw_map.splitlines()[yf][xf] == ".":
                         dict_map[(x + blanks, y)
-                                 ] |= {Direction.Right: (right + blanks, y)}
+                                 ] |= {Direction.Right: ((xf, yf), f)}
     max_l = max(len(l) for l in raw_map.splitlines())
     trans_lines = [f"{l:<{max_l}}" for l in raw_map.splitlines()]
     transposed = ["".join(list(k)).rstrip() for k in zip(*trans_lines)]
@@ -83,19 +92,27 @@ def parse(inp: str) -> tuple[list[int], list[str], defaultdict[Point, dict[Direc
             for y in range(len(full_line)):
                 if full_line[y] == ".":
                     if y == 0:
-                        up = len(full_line) - 1
+                        yf = len(full_line) - 1 + blanks
+                        xf = x
+                        f = Direction.Up
                     else:
-                        up = y - 1
-                    if full_line[up] == ".":
+                        yf = y - 1 + blanks
+                        xf = x
+                        f = Direction.Up
+                    if raw_map.splitlines()[yf][xf] == ".":
                         dict_map[(x, y + blanks)
-                                 ] |= {Direction.Up: (x, up + blanks)}
+                                 ] |= {Direction.Up: ((xf, yf), f)}
                     if y == len(full_line) - 1:
-                        down = 0
+                        yf = blanks
+                        xf = x
+                        f = Direction.Down
                     else:
-                        down = y + 1
-                    if full_line[down] == ".":
+                        yf = y + 1 + blanks
+                        xf = x
+                        f = Direction.Down
+                    if raw_map.splitlines()[yf][xf] == ".":
                         dict_map[((x, y + blanks))
-                                 ] |= {Direction.Down: (x, down + blanks)}
+                                 ] |= {Direction.Down: ((xf, yf), f)}
     return moves, turns, dict_map
 
 
@@ -106,11 +123,11 @@ def part1(inp: str) -> int:
     while len(turns) > 0:
         moving = moves.pop()
         for _ in range(moving):
-            pos = dict_map[pos].get(facing, pos)
+            pos, facing = dict_map[pos].get(facing, (pos, facing))
         facing = facing.turn(turns.pop())
     moving = moves.pop()
     for _ in range(moving):
-        pos = dict_map[pos].get(facing, pos)
+        pos, facing = dict_map[pos].get(facing, (pos, facing))
     return score(pos) + facing.value
 
 
