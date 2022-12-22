@@ -6,10 +6,9 @@ from typing import Self
 from collections import defaultdict
 from pathlib import Path
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from time import sleep
 
 basepath = Path(__file__).parent
+
 
 Point = tuple[int, int]
 
@@ -92,7 +91,7 @@ def parse(inp: str, part: int) -> tuple[list[int], list[str], defaultdict[Point,
                     f = Direction.Left
                 if raw_map.splitlines()[yf][xf] == ".":
                     dict_map[(x + blanks, y)
-                             ] |= {Direction.Left: ((xf, y), f)}
+                             ] |= {Direction.Left: ((xf, yf), f)}
                 if x == len(full_line) - 1 and part == 1:
                     xf = blanks
                     yf = y
@@ -183,30 +182,39 @@ def parse(inp: str, part: int) -> tuple[list[int], list[str], defaultdict[Point,
     return moves, turns, dict_map
 
 
+def plot(dict_map, px, py, max_x, max_y, pos, facing):
+    plt.gcf().clear()
+    plt.xlim(-1, max_x+1)
+    plt.ylim(-1, max_y+1)
+    plt.scatter(px, py, c="lightgray", marker=".")
+    for p, _ in dict_map[pos].values():
+        plt.scatter(p[0], max_y - p[1], c="red", marker=".")
+    plt.scatter(pos[0], max_y - pos[1], c="green", marker=repr(facing))
+    plt.pause(0.02)
+    plt.gcf().canvas.flush_events()
+
+
 def solve(inp: str, part: int, show: bool = True) -> int:
     plt.ion()
     moves, turns, dict_map = parse(inp, part)
     pos = min(dict_map.keys(), key=score)
     facing = Direction.Right
+    max_x = max(p[0] for p in dict_map.keys())
     max_y = max(p[1] for p in dict_map.keys())
+    px = [p[0] for p in dict_map.keys()]
+    py = [max_y - p[1] for p in dict_map.keys()]
     while len(turns) > 0:
         moving = moves.pop()
         for _ in range(moving):
             pos, facing = dict_map[pos].get(facing, (pos, facing))
             if show:
-                plt.gcf().clear()
-                for p in dict_map.keys():
-                    plt.scatter(p[0], max_y - p[1], c="lightgray", marker=".")
-                plt.scatter(pos[0], max_y - pos[1],
-                            c="green", marker=repr(facing))
-                for p, _ in dict_map[pos].values():
-                    plt.scatter(p[0], max_y - p[1], c="red", marker="o")
-                plt.pause(0.5)
-                plt.gcf().canvas.flush_events()
+                plot(dict_map, px, py, max_x, max_y, pos, facing)
         facing = facing.turn(turns.pop())
     moving = moves.pop()
     for _ in range(moving):
         pos, facing = dict_map[pos].get(facing, (pos, facing))
+        if show:
+            plot(dict_map, px, py, max_x, max_y, pos, facing)
     return score(pos) + facing.value
 
 
@@ -214,10 +222,10 @@ if __name__ == "__main__":
     with open(basepath/"input", "rt") as f:
         inp = f.read()
 
-    out1 = solve(inp, 1)
+    out1 = solve(inp, 1, False)
     with open(basepath/"output1", "wt") as f:
         f.write(str(out1))
 
-    #out2 = solve(inp, 2)
-    # with open(basepath/"output2", "wt") as f:
-    #    f.write(str(out2))
+    out2 = solve(inp, 2, False)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
