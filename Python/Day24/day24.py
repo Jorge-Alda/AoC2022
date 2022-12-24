@@ -19,8 +19,6 @@ class Blizzard:
         self.pattern_S = [blizzards_S]
         self.pattern_E = [blizzards_E]
         self.pattern_W = [blizzards_W]
-        self.visited: defaultdict[tuple[int, int],
-                                  list[int]] = defaultdict(list)
         for i in range(self.period-1):
             self.pattern_N.append(move_blizzards_N(dim_y, self.pattern_N[i]))
             self.pattern_S.append(move_blizzards_S(dim_y, self.pattern_S[i]))
@@ -33,19 +31,20 @@ class Blizzard:
     def check_blizz(self, pos: tuple[int, int], turn: int) -> bool:
         return pos not in self.pattern_N[(turn+1) % self.period] and pos not in self.pattern_S[(turn+1) % self.period] and pos not in self.pattern_E[(turn+1) % self.period] and pos not in self.pattern_W[(turn+1) % self.period]
 
-    def run(self, pos: tuple[int, int], show: bool = False) -> int:
+    def run(self, pos: tuple[int, int], goal: tuple[int, int], t0: int = 0, show: bool = False) -> int:
         candidates = [pos]
-        turn = 0
+        turn = t0
+        visited: defaultdict[tuple[int, int], list[int]] = defaultdict(list)
         while 1:
             next_c = []
             if show:
                 self.plot(turn, candidates)
             for p0 in candidates:
-                if p0 == (self.dim_x-2, 0):
+                if p0 == goal:
                     return turn
-                if any((turn-x) % self.period == 0 for x in self.visited[p0]):
+                if any((turn-x) % self.period == 0 for x in visited[p0]):
                     continue
-                self.visited[p0].append(turn)
+                visited[p0].append(turn)
                 neighbors = [p0,
                              (p0[0], p0[1]+1),
                              (p0[0], p0[1]-1),
@@ -155,13 +154,23 @@ def move_blizzards_W(dim_x: int, blizzards: list[tuple[int, int]]) -> list[tuple
 
 def part1(inp: str, show: bool = False) -> int:
     bliz = parse(inp)
-    return bliz.run((1, bliz.dim_y-1), show)
+    return bliz.run((1, bliz.dim_y-1), (bliz.dim_x-2, 0), show=show)
 
+
+def part2(inp: str, show: bool = False) -> int:
+    bliz = parse(inp)
+    t0 = bliz.run((1, bliz.dim_y-1), (bliz.dim_x-2, 0), show=show)
+    t1 = bliz.run((bliz.dim_x-2, 0), (1, bliz.dim_y-1), t0, show=show)
+    return bliz.run((1, bliz.dim_y-1), (bliz.dim_x-2, 0), t1, show=show)
 
 if __name__ == "__main__":
     with open(basepath/"input", "rt") as f:
         inp = f.read()
 
-    out1 = part1(inp, True)
-    with open(basepath/"output1", "wt") as f:
-        f.write(str(out1))
+    #out1 = part1(inp, False)
+    # with open(basepath/"output1", "wt") as f:
+    #    f.write(str(out1))
+
+    out2 = part2(inp, True)
+    with open(basepath/"output2", "wt") as f:
+        f.write(str(out2))
